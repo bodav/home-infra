@@ -1,0 +1,22 @@
+- name: Deploy docker compose
+  hosts: all
+  become: true
+  vars:
+    compose: "/srv/home-infra/docker-compose.yml"
+  tasks:
+    - name: Git update home-infra repo
+      ansible.builtin.git:
+        repo: "https://github.com/bodav/home-infra.git"
+        dest: /srv/home-infra
+        force: true
+        version: HEAD # noqa: latest
+      notify: "bounce docker compose"
+
+  handlers:
+    - name: Docker compose down
+      ansible.builtin.command: "docker compose -f {{ compose }} down --remove-orphans"
+      listen: "bounce docker compose"
+
+    - name: Docker compose up
+      ansible.builtin.command: "docker compose -f {{ compose }} up -d"
+      listen: "bounce docker compose"
